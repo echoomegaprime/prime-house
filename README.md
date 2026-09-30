@@ -1,24 +1,39 @@
 # Prime
 
-House intelligence for the commander and the bloodline.
+<img src="docs/banner.jpg" alt="A dark steel room and one slit of light" width="100%">
 
-Prime stands a local estate, reads the public web, and takes the next safe local step while this page is open. It serves the commander first. It does not take over a machine, store a secret, or claim a fleet patch it did not make.
+House intelligence. It serves the commander first and the bloodline next.
 
-## Orders
+<img src="docs/seal.jpg" alt="A brass ring with one vertical cut" width="160">
 
-Say these in the deck.
+Prime stands a local estate, reads the public web, and takes the next safe local step while this page is open. It does not take over a machine, store a secret, or claim a fleet patch it did not make.
 
-| Order | What it does |
+<img src="docs/estate.svg" alt="FORGE jailed, ANVIL unreachable, CRUCIBLE unreachable, HAMMER holds Downloads" width="100%">
+
+## Charge
+
+Serve the commander first and the bloodline next. Iqra is protected. Never store a secret. Never take a machine. Never claim a fleet patch.
+
+Say `bloodline` and it repeats that. Say `hold` and service pauses. Say `serve` and it resumes.
+
+## Commands
+
+The full list, with every alias, is [docs/COMMANDS.md](docs/COMMANDS.md).
+
+| Say | Effect |
 |---|---|
-| Posture | Reds, lock, service, lessons |
-| Dispatch | Three local steps. Nothing is merged while the lock is on |
-| Serve | Keeps reading and takes the next local step. Speaks only when the house moves |
-| Hold | Pauses service |
-| Bloodline | The charge |
-| School | Cross-architecture and the install contracts |
-| Integrate forge / Integrate hammer | The user-mode contract you install yourself |
-| Learn <url or subject> | Reads a public page and keeps it |
-| More | Twenty local orders |
+| `posture` | Reds, lock, service, lessons |
+| `dispatch` | Three local steps. Nothing merged while the lock is on |
+| `orders` | The first twenty |
+| `more` | Twenty more, all local |
+| `brief` | Four lines |
+| `reds` | Each failing guard |
+| `dry run` | Next cycle, nothing merged |
+| `learn <url>` | Read a public page and keep it |
+| `school` | Seven tracks: abi, pe, elf, hammer, forge, ipc, method |
+| `integrate forge` | The Linux contract you install |
+| `integrate hammer` | The Windows contract you install |
+| `release the lock` | Allows a rewrite of the standing order |
 
 ## Refusals
 
@@ -26,6 +41,7 @@ Say these in the deck.
 - No private hosts, link-local, or names that resolve there
 - No secret values kept
 - Fleet files stay drafts until a human merges them
+- ANVIL and CRUCIBLE are not in the room
 
 ## Run
 
@@ -34,7 +50,7 @@ npm install
 npm run dev
 ```
 
-The kernel tests:
+Kernel tests:
 
 ```bash
 node --experimental-strip-types --test --test-concurrency=1 src/lib/prometheus/kernel.test.ts

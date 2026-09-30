@@ -1,0 +1,32 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 280" role="img" aria-label="Four hosts. Two are unreachable. FORGE is jailed. HAMMER holds Downloads.">
+  <rect width="920" height="280" fill="#121416"/>
+  <g font-family="ui-sans-serif, system-ui, sans-serif" fill="#e7e1d6">
+    <text x="28" y="36" font-size="13" letter-spacing="3" fill="#9a917f">ESTATE</text>
+    <g>
+      <rect x="28" y="64" width="200" height="160" rx="8" fill="#1b1e22" stroke="#c4a574" stroke-width="1"/>
+      <text x="44" y="96" font-size="16">FORGE</text>
+      <text x="44" y="124" font-size="13" fill="#9a917f">Jailed</text>
+      <text x="44" y="148" font-size="13" fill="#9a917f">/home/forge</text>
+      <text x="44" y="188" font-size="12" fill="#c4a574">You install the unit</text>
+    </g>
+    <g>
+      <rect x="248" y="64" width="200" height="160" rx="8" fill="#1b1e22" stroke="#3a3f46"/>
+      <text x="264" y="96" font-size="16">ANVIL</text>
+      <text x="264" y="124" font-size="13" fill="#9a917f">Unreachable</text>
+      <text x="264" y="148" font-size="13" fill="#9a917f">Not in this room</text>
+    </g>
+    <g>
+      <rect x="468" y="64" width="200" height="160" rx="8" fill="#1b1e22" stroke="#3a3f46"/>
+      <text x="484" y="96" font-size="16">CRUCIBLE</text>
+      <text x="484" y="124" font-size="13" fill="#9a917f">Unreachable</text>
+      <text x="484" y="148" font-size="13" fill="#9a917f">Not in this room</text>
+    </g>
+    <g>
+      <rect x="688" y="64" width="204" height="160" rx="8" fill="#1b1e22" stroke="#8d98a3"/>
+      <text x="704" y="96" font-size="16">HAMMER</text>
+      <text x="704" y="124" font-size="13" fill="#9a917f">Windows</text>
+      <text x="704" y="148" font-size="13" fill="#9a917f">Holds Downloads</text>
+      <text x="704" y="188" font-size="12" fill="#c4a574">You install the service</text>
+    </g>
+  </g>
+</svg>
