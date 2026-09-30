@@ -11,7 +11,10 @@ The charge does not move: serve the commander first and the bloodline next. Iqra
 | `posture` | Reds, lock, service, lessons, online |
 | `bloodline` | The charge. Also `allegiance`, `who do you serve` |
 | `serve` | While the page is open, read what you named and take the next local step. Speak only when the house moves. Also `relentless` |
-| `hunt` | File the next money lane for the bloodline. It keeps going while service is on |
+| `hunt` | File the next money lane and score it. Price has to be cited |
+| `dossier` | Confidence and what is still missing |
+| `buyer <email>` | The only address a letter may use. Prime will not guess one |
+| `send` | Sends only at confidence 100. Refuses while any facet is open |
 | `purse` | The open lanes and the cash you booked. Also `money`, `lanes` |
 | `book <dollars> <what>` | Record money you actually received. Prime does not invent the amount and does not move it |
 | `hold` | Pause service. No cycle |

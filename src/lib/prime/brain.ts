@@ -7,7 +7,7 @@ import { analyzeNotes, DRIVES, type KeptNote } from "./absorb.ts";
 import { publicUrl } from "./net.ts";
 import { dispatch, LOCKED_ORDER, type House } from "./more.ts";
 import { integratePlan, schoolIndex, schoolLesson, takeoverRefusal } from "./school.ts";
-import { fileLane, LANES, moneyLine, parseBook, type Booked, type FiledLane } from "./purse.ts";
+import { fileLane, huntLine, isEmail, isHouseTopic, LANES, missing, moneyLine, nextAsk, openDossier, parseBook, score, type Booked, type Dossier, type FiledLane } from "./purse.ts";
 
 export interface Alias {
   name: string;
@@ -51,6 +51,7 @@ export interface Policy {
   serve: boolean;
   purse: FiledLane[];
   booked: Booked[];
+  dossiers: Dossier[];
 }
 
 export interface Diff {
@@ -128,6 +129,9 @@ const RESERVED = new Set([
   "book",
   "lanes",
   "money",
+  "buyer",
+  "send",
+  "dossier",
 ]);
 
 export const ORDER_BOOK = [
@@ -185,6 +189,7 @@ export function defaultPolicy(): Policy {
     serve: true,
     purse: [],
     booked: [],
+    dossiers: [],
   };
 }
 
@@ -261,6 +266,21 @@ export function normalizePolicy(input: Policy): Policy {
           .filter((row) => row && Number.isInteger(row.amount) && row.amount >= 1 && row.amount <= 10000000 && typeof row.note === "string" && !looksLikeSecret(row.note))
           .slice(-24)
           .map((row) => ({ amount: row.amount, note: row.note.slice(0, 80), stamp: typeof row.stamp === "number" ? row.stamp : 0 }))
+      : [],
+    dossiers: Array.isArray(input?.dossiers)
+      ? input.dossiers
+          .filter((row) => row && typeof row.laneId === "string" && LANES.some((lane) => lane.id === row.laneId))
+          .slice(-8)
+          .map((row) => ({
+            laneId: row.laneId,
+            buyer: typeof row.buyer === "string" && isEmail(row.buyer) ? row.buyer.slice(0, 120) : "",
+            facets: Array.isArray(row.facets)
+              ? row.facets
+                  .filter((facet) => facet && typeof facet.key === "string" && typeof facet.text === "string" && typeof facet.source === "string" && !looksLikeSecret(facet.text))
+                  .slice(0, 8)
+                  .map((facet) => ({ key: facet.key.slice(0, 20), text: facet.text.slice(0, 280), source: facet.source.slice(0, 300) }))
+              : [],
+          }))
       : [],
   };
 }
@@ -413,12 +433,47 @@ function route(raw: string, kernel: KernelState, policy: Policy): Turn {
     if (!filed) {
       return pack(kernel, policy, `All ${LANES.length} lanes are open. ${moneyLine(policy.booked)}`, LANES.map((lane) => lane.next), null);
     }
-    const keep = policy.topic && !LANES.some((lane) => lane.subject === policy.topic);
+    const keep = !isHouseTopic(policy.topic);
+    const dossier = openDossier(filed.lane.id);
+    const ask = nextAsk(dossier);
     return pack(
       kernel,
-      { ...policy, purse: filed.filed, topic: keep ? policy.topic : filed.lane.subject },
-      `${filed.lane.name}. ${filed.lane.next} ${moneyLine(policy.booked)}`,
-      [filed.lane.subject],
+      { ...policy, purse: filed.filed, dossiers: [...policy.dossiers, dossier].slice(-8), topic: keep ? policy.topic : ask || filed.lane.subject },
+      huntLine(filed.lane.name, dossier, policy.booked),
+      dossier.facets.map((facet) => `${facet.key}: ${facet.source}`),
+      null,
+    );
+  }
+
+  if (/^dossier$|^confidence$/.test(t)) {
+    const dossier = policy.dossiers[policy.dossiers.length - 1];
+    if (!dossier) return pack(kernel, policy, `No dossier. Say hunt. ${moneyLine(policy.booked)}`, [], null);
+    const name = LANES.find((lane) => lane.id === dossier.laneId)?.name ?? dossier.laneId;
+    return pack(kernel, policy, huntLine(name, dossier, policy.booked), dossier.facets.map((facet) => `${facet.key}: ${facet.text}`), null);
+  }
+
+  if (/^buyer\s+\S+/.test(t)) {
+    const email = (t.match(/^buyer\s+(\S+)/) ?? [])[1] ?? "";
+    const dossier = policy.dossiers[policy.dossiers.length - 1];
+    if (!dossier) return pack(kernel, policy, "Say hunt before you name a buyer.", [], null);
+    if (!isEmail(email)) return pack(kernel, policy, "That is not an email. I will not guess a buyer.", [], null);
+    const next = { ...dossier, buyer: email };
+    const dossiers = [...policy.dossiers.slice(0, -1), next];
+    return pack(kernel, { ...policy, dossiers }, huntLine(LANES.find((lane) => lane.id === next.laneId)?.name ?? next.laneId, next, policy.booked), [email], null);
+  }
+
+  if (/^send$/.test(t)) {
+    const dossier = policy.dossiers[policy.dossiers.length - 1];
+    if (!dossier) return pack(kernel, policy, "Nothing to send. Say hunt.", [], null);
+    const confidence = score(dossier);
+    if (confidence < 100) {
+      return pack(kernel, policy, `Confidence ${confidence}. I will not send. Missing ${missing(dossier).join(", ")}.`, missing(dossier), null);
+    }
+    return pack(
+      kernel,
+      policy,
+      `Confidence 100. The letter for ${dossier.buyer} is sealed. No mailbox is connected on this house, so it has not left.`,
+      dossier.facets.map((facet) => facet.source),
       null,
     );
   }

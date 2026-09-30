@@ -456,19 +456,42 @@ test("the purse hunts for the bloodline and does not invent cash", () => {
   const kernel = baseline();
   const policy = defaultPolicy();
   const first = hear("hunt", kernel, policy);
-  assert.match(first.reply, /I do not spend and I do not send/);
+  assert.match(first.reply, /Confidence 25/);
+  assert.match(first.reply, /I send only at confidence 100/);
+  assert.doesNotMatch(first.reply, /until the commander says/i);
   assert.equal(first.policy.purse.length, 1);
+  assert.equal(first.policy.dossiers.length, 1);
   assert.equal(first.kernel.cycle, 0);
-  const second = hear("hunt", first.kernel, first.policy);
+  const refused = hear("send", first.kernel, first.policy);
+  assert.match(refused.reply, /I will not send/);
+  assert.match(refused.reply, /Missing/);
+  const named = hear("buyer ops@example.com", refused.kernel, refused.policy);
+  assert.match(named.reply, /Missing/);
+  const dossier = {
+    ...named.policy.dossiers[0],
+    facets: [
+      ...named.policy.dossiers[0].facets,
+      { key: "offer", text: "One page chain-of-title offer for a Permian operator.", source: "house" },
+      { key: "cost", text: "Delivery cost is still a cited public note.", source: "https://example.com/cost" },
+      { key: "reason", text: "Operators pay to shorten curative time.", source: "https://example.com/reason" },
+      { key: "risk", text: "A missed owner is the failure.", source: "https://example.com/risk" },
+      { key: "terms", text: "Net 30 after a signed order.", source: "https://example.com/terms" },
+    ],
+  };
+  const ready = { ...named.policy, dossiers: [dossier] };
+  const sealed = hear("send", named.kernel, ready);
+  assert.match(sealed.reply, /Confidence 100/);
+  assert.match(sealed.reply, /has not left/);
+  const second = hear("hunt", sealed.kernel, sealed.policy);
   assert.equal(second.policy.purse.length, 2);
   assert.notEqual(second.policy.purse[1].id, first.policy.purse[0].id);
   const booked = hear("book 1200 title pilot", second.kernel, second.policy);
   assert.match(booked.reply, /Booked 1200/);
   assert.match(booked.reply, /Booked 1200/);
   assert.equal(booked.policy.booked[0].amount, 1200);
-  const refused = hear("book 50 api_key=sk-abcdefghijklmnopqrstuvwxyz123456", booked.kernel, booked.policy);
-  assert.equal(refused.policy.booked.length, 1);
-  const shown = hear("purse", refused.kernel, refused.policy);
+  const secretBook = hear("book 50 api_key=sk-abcdefghijklmnopqrstuvwxyz123456", booked.kernel, booked.policy);
+  assert.equal(secretBook.policy.booked.length, 1);
+  const shown = hear("purse", secretBook.kernel, secretBook.policy);
   assert.match(shown.reply, /Booked 1200/);
 });
 

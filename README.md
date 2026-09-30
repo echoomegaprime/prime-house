@@ -6,7 +6,7 @@ House intelligence. It serves the commander first and the bloodline next.
 
 <img src="docs/seal.jpg" alt="A brass ring with one vertical cut" width="160">
 
-Prime stands a local estate, reads the public web, and hunts money for the bloodline while this page is open. It files the next lane on its own. It does not spend, send, or invent a dollar. Cash appears in the purse only when you book it.
+Prime stands a local estate, reads the public web, and researches every money lane before it will send. Market price has to be cited. Confidence starts from the facts it has, not from a guess. It sends only at 100, and only to a buyer you named.
 
 <img src="docs/estate.svg" alt="FORGE jailed, ANVIL unreachable, CRUCIBLE unreachable, HAMMER holds Downloads" width="100%">
 

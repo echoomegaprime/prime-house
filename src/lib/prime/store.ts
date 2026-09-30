@@ -4,7 +4,7 @@ import { hear, defaultPolicy, looksLikeSecret, openingKernel, type Policy } from
 import { absorbBatch, type Incoming } from "./absorb.ts";
 import { acceptPhrase, restoreHouse, type HouseSave } from "./harden.ts";
 import { phraseBrief } from "./phrase.ts";
-import { fileLane, LANES, moneyLine } from "./purse.ts";
+import { absorbLesson, fileLane, huntLine, isHouseTopic, LANES, nextAsk, openDossier } from "./purse.ts";
 import { readPublic } from "./read.ts";
 import type { KernelState } from "../prometheus/types.ts";
 import type { Diff } from "./brain.ts";
@@ -37,7 +37,7 @@ interface Store {
 const greeting: Line = {
   id: "g0",
   role: "prime",
-  text: "Prime. I serve the commander and the bloodline. I hunt money for the bloodline and I do not spend it. The watch is armed. I don't open private hosts, and I have not touched the fleet.",
+  text: "Prime. I serve the commander and the bloodline. I research every money lane, including price, before I send. I send only at confidence 100. I don't open private hosts, and I have not touched the fleet.",
   evidence: [],
   diff: null,
 };
@@ -140,15 +140,20 @@ function estateMoved(before: KernelState, after: KernelState): boolean {
 function huntDuty(set: PrimeSet, get: () => Store) {
   const policy = get().policy;
   if (!policy.serve) return;
-  const filed = fileLane(policy.purse);
-  const keep = policy.topic && !LANES.some((lane) => lane.subject === policy.topic);
-  if (filed) {
-    const spoken = `${filed.lane.name}. ${filed.lane.next} ${moneyLine(policy.booked)}`;
+  const keep = !isHouseTopic(policy.topic);
+  let dossiers = policy.dossiers;
+  let purse = policy.purse;
+  if (purse.length === 0) {
+    const filed = fileLane([]);
+    if (!filed) return;
+    const dossier = openDossier(filed.lane.id);
+    const spoken = huntLine(filed.lane.name, dossier, policy.booked);
     set({
       policy: {
         ...get().policy,
         purse: filed.filed,
-        topic: keep ? policy.topic : filed.lane.subject,
+        dossiers: [dossier],
+        topic: keep ? policy.topic : nextAsk(dossier) || filed.lane.subject,
         lastOrder: policy.lastOrder,
         serve: true,
       },
@@ -158,12 +163,30 @@ function huntDuty(set: PrimeSet, get: () => Store) {
     speak(spoken, get().voice);
     return;
   }
-  if (keep) return;
-  const subjects = LANES.map((lane) => lane.subject);
-  const index = subjects.indexOf(policy.topic);
-  const subject = subjects[(index + 1) % subjects.length];
-  if (!subject || subject === policy.topic) return;
-  set({ policy: { ...get().policy, topic: subject, lastOrder: policy.lastOrder } });
+  const current = dossiers[dossiers.length - 1];
+  if (!current) return;
+  const lesson = policy.lessons[policy.lessons.length - 1];
+  const next = absorbLesson(current, lesson);
+  const changed = next.facets.length !== current.facets.length;
+  if (changed) dossiers = [...dossiers.slice(0, -1), next];
+  const ask = nextAsk(changed ? next : current);
+  const topic = keep ? policy.topic : ask || policy.topic;
+  if (changed || topic !== policy.topic) {
+    set({
+      policy: {
+        ...get().policy,
+        dossiers,
+        topic,
+        lastOrder: policy.lastOrder,
+        serve: true,
+      },
+    });
+  }
+  if (!changed || get().policy.night) return;
+  const name = LANES.find((lane) => lane.id === next.laneId)?.name ?? next.laneId;
+  const spoken = huntLine(name, next, policy.booked);
+  writeLine(set, get, spoken, null);
+  speak(spoken, get().voice);
 }
 
 function serveDuty(set: PrimeSet, get: () => Store) {
