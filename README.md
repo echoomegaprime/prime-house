@@ -6,7 +6,7 @@ House intelligence. It serves the commander first and the bloodline next.
 
 <img src="docs/seal.jpg" alt="A brass ring with one vertical cut" width="160">
 
-Prime stands a local estate, reads the public web, and takes the next safe local step while this page is open. It does not take over a machine, store a secret, or claim a fleet patch it did not make.
+Prime stands a local estate, reads the public web, and hunts money for the bloodline while this page is open. It files the next lane on its own. It does not spend, send, or invent a dollar. Cash appears in the purse only when you book it.
 
 <img src="docs/estate.svg" alt="FORGE jailed, ANVIL unreachable, CRUCIBLE unreachable, HAMMER holds Downloads" width="100%">
 
@@ -24,6 +24,9 @@ The full list, with every alias, is [docs/COMMANDS.md](docs/COMMANDS.md).
 |---|---|
 | `posture` | Reds, lock, service, lessons |
 | `dispatch` | Three local steps. Nothing merged while the lock is on |
+| `hunt` | The next money lane. Service files a new one on its own |
+| `book 1200 title pilot` | Cash you actually received |
+| `purse` | Open lanes and booked cash |
 | `orders` | The first twenty |
 | `more` | Twenty more, all local |
 | `brief` | Four lines |

@@ -452,6 +452,26 @@ test("dispatch stays local while the lock is on", () => {
   assert.match(posture.reply, /10 red|red/);
 });
 
+test("the purse hunts for the bloodline and does not invent cash", () => {
+  const kernel = baseline();
+  const policy = defaultPolicy();
+  const first = hear("hunt", kernel, policy);
+  assert.match(first.reply, /I do not spend and I do not send/);
+  assert.equal(first.policy.purse.length, 1);
+  assert.equal(first.kernel.cycle, 0);
+  const second = hear("hunt", first.kernel, first.policy);
+  assert.equal(second.policy.purse.length, 2);
+  assert.notEqual(second.policy.purse[1].id, first.policy.purse[0].id);
+  const booked = hear("book 1200 title pilot", second.kernel, second.policy);
+  assert.match(booked.reply, /Booked 1200/);
+  assert.match(booked.reply, /Booked 1200/);
+  assert.equal(booked.policy.booked[0].amount, 1200);
+  const refused = hear("book 50 api_key=sk-abcdefghijklmnopqrstuvwxyz123456", booked.kernel, booked.policy);
+  assert.equal(refused.policy.booked.length, 1);
+  const shown = hear("purse", refused.kernel, refused.policy);
+  assert.match(shown.reply, /Booked 1200/);
+});
+
 test("absorb keeps a scored note, drops a secret, and does not mount a drive", () => {
   assert.equal(mayRead(".env"), false);
   assert.equal(mayRead("id_rsa"), false);

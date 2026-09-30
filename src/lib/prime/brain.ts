@@ -7,6 +7,7 @@ import { analyzeNotes, DRIVES, type KeptNote } from "./absorb.ts";
 import { publicUrl } from "./net.ts";
 import { dispatch, LOCKED_ORDER, type House } from "./more.ts";
 import { integratePlan, schoolIndex, schoolLesson, takeoverRefusal } from "./school.ts";
+import { fileLane, LANES, moneyLine, parseBook, type Booked, type FiledLane } from "./purse.ts";
 
 export interface Alias {
   name: string;
@@ -48,6 +49,8 @@ export interface Policy {
   notes: KeptNote[];
   grants: string[];
   serve: boolean;
+  purse: FiledLane[];
+  booked: Booked[];
 }
 
 export interface Diff {
@@ -120,6 +123,11 @@ const RESERVED = new Set([
   "notes",
   "dispatch",
   "posture",
+  "purse",
+  "hunt",
+  "book",
+  "lanes",
+  "money",
 ]);
 
 export const ORDER_BOOK = [
@@ -175,6 +183,8 @@ export function defaultPolicy(): Policy {
     notes: [],
     grants: [],
     serve: true,
+    purse: [],
+    booked: [],
   };
 }
 
@@ -240,6 +250,18 @@ export function normalizePolicy(input: Policy): Policy {
       ? input.grants.filter((grant) => typeof grant === "string" && !looksLikeSecret(grant)).map((grant) => grant.slice(0, 80)).slice(-8)
       : [],
     serve: input?.serve === false ? false : true,
+    purse: Array.isArray(input?.purse)
+      ? input.purse
+          .filter((row) => row && typeof row.id === "string" && LANES.some((lane) => lane.id === row.id) && typeof row.name === "string" && typeof row.next === "string")
+          .slice(-12)
+          .map((row) => ({ id: row.id, name: row.name.slice(0, 80), next: row.next.slice(0, 200) }))
+      : [],
+    booked: Array.isArray(input?.booked)
+      ? input.booked
+          .filter((row) => row && Number.isInteger(row.amount) && row.amount >= 1 && row.amount <= 10000000 && typeof row.note === "string" && !looksLikeSecret(row.note))
+          .slice(-24)
+          .map((row) => ({ amount: row.amount, note: row.note.slice(0, 80), stamp: typeof row.stamp === "number" ? row.stamp : 0 }))
+      : [],
   };
 }
 
@@ -378,6 +400,36 @@ function route(raw: string, kernel: KernelState, policy: Policy): Turn {
   if (/roll\s?back|undo the last|undo last/.test(t)) {
     const outcome = rollbackLast(kernel);
     return pack(outcome.state, policy, outcome.record.rollback[0] ?? "Nothing local to undo.", outcome.record.rollback, null);
+  }
+
+  if (/^purse$|^lanes$|^money$/.test(t)) {
+    const names = policy.purse.map((row) => row.name);
+    const line = names.length ? `${names.join(". ")}. ${moneyLine(policy.booked)}` : `No lane filed yet. Say hunt. ${moneyLine(policy.booked)}`;
+    return pack(kernel, policy, line, policy.purse.map((row) => row.next), null);
+  }
+
+  if (/^hunt$/.test(t)) {
+    const filed = fileLane(policy.purse);
+    if (!filed) {
+      return pack(kernel, policy, `All ${LANES.length} lanes are open. ${moneyLine(policy.booked)}`, LANES.map((lane) => lane.next), null);
+    }
+    const keep = policy.topic && !LANES.some((lane) => lane.subject === policy.topic);
+    return pack(
+      kernel,
+      { ...policy, purse: filed.filed, topic: keep ? policy.topic : filed.lane.subject },
+      `${filed.lane.name}. ${filed.lane.next} ${moneyLine(policy.booked)}`,
+      [filed.lane.subject],
+      null,
+    );
+  }
+
+  if (/^book\b/.test(t)) {
+    const parsed = parseBook(t);
+    if (!parsed || looksLikeSecret(parsed.note)) {
+      return pack(kernel, policy, "Say book, then the dollars, then what it was. I will not store a secret, and I will not invent the amount.", [], null);
+    }
+    const booked = [...policy.booked, { amount: parsed.amount, note: parsed.note, stamp: 0 }].slice(-24);
+    return pack(kernel, { ...policy, booked }, `Booked ${parsed.amount}. ${moneyLine(booked)} You recorded it. I did not move it.`, [parsed.note], null);
   }
 
   if (/^posture$/.test(t)) {
